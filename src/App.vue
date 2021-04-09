@@ -1,18 +1,17 @@
 <template>
   <div id="app">
-    <QuickStartGuide />
+    <GisLeaflet />
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue';
-import QuickStartGuide from './components/leaflet/example/QuickStartGuide.vue';
+
+import GisLeaflet from './components/leaflet/example/Huli';
 
 export default {
   name: 'App',
   components: {
-    HelloWorld,
-    QuickStartGuide
+    GisLeaflet
   }
 }
 </script>
