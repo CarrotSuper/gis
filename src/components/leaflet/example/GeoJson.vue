@@ -11,6 +11,7 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
 import { find } from 'loadsh';
+import axios from 'axios';
 
 export default {
   data() {
@@ -35,18 +36,13 @@ export default {
   },
   mounted() {
     this.init();
+    this.initLayerGeoJson();
   },
   methods: {
 
     init() {
-      const image = L.tileLayer('http://t{s}.tianditu.gov.cn/img_w/wmts?tk=' + this.tk + '&SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TileMatrix={z}&TileCol={x}&TileRow={y}', {
-        subdomains: [0, 1, 2, 3, 4, 5, 6, 7],
-        opacity: 0.9
-      });
-
       var builds = L.tileLayer.wms("http://172.22.241.110:8080/geoserver/zhcq/wms?service=WMS&version=1.1.0&request=GetMap&layers=zhcq%3Abuildings&bbox=73.62%2C16.7%2C134.77%2C53.56&width=768&height=462&srs=EPSG%3A4490&format=application%2Fopenlayers3", {
       });
-
       //地图对象
       this.map = L.map('map', {
         // Options
@@ -360,45 +356,17 @@ export default {
         // maxZoom	Number	null	The maximum possible zoom to use.
 
       });
+      L.tileLayer('http://t{s}.tianditu.gov.cn/img_w/wmts?tk=' + this.tk + '&SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TileMatrix={z}&TileCol={x}&TileRow={y}', {
+        subdomains: [0, 1, 2, 3, 4, 5, 6, 7],
+        opacity: 0.9
+      }).addTo(this.map);
 
-      image.addTo(this.map);
       // builds.addTo(this.map);
-
-      this.map.setView([24.487713, 118.129859], 12);
-
-      // let marker = L.marker([51.5, -0.09]).addTo(this.map);
-
-      // let circle = L.circle([51.508, -0.11], {
-      //   color: 'red',
-      //   fillColor: '#f03',
-      //   fillOpacity: 0.5,
-      //   radius: 500
-      // }).addTo(this.map);
-
-      // let polygon = L.polygon([
-      //   [51.509, -0.08],
-      //   [51.503, -0.06],
-      //   [51.51, -0.047]
-      // ]).addTo(this.map);
-
-
-      // marker.bindPopup("<b>Hello world!</b><br>I am a popup.");
-      // circle.bindPopup("I am a circle.");
-      // polygon.bindPopup("I am a polygon.");
-
-      // let popup = L.popup()
-      //   .setLatLng([51.5, -0.09])
-      //   .setContent("I am a standalone popup..........................")
-      //   .openOn(this.map);
-
-
-      // function onMapClick(e) {
-      //   alert("You clicked the map at " + e.latlng);
-      // }
-
-
       this.initEvent();
       this.initUILayers();
+
+      this.map.setView([24.529594499216834, 118.16049098968507], 17);
+
     },
     initEvent() {
 
@@ -464,6 +432,39 @@ export default {
         console.info("click", e);
       });
     },
+    initLayerGeoJson() {
+      let getColor = data => {
+        return "red";
+      }
+      // style，自定义风格
+      let style = feature => {
+        return {
+          fillColor: getColor(feature.properties.density),
+          weight: 2,
+          opacity: 1,
+          color: 'white',
+          dashArray: '3',
+          fillOpacity: 0.7
+        };
+      }
+      // style，自定义风格
+      let filter = (feature, layer) => {
+        return true;
+      }
+      // onEachFeature，遍历feature时执行
+      let onEachFeature = (feature, layer) => {
+        layer.bindPopup(feature.properties.code);
+      }
+      let process = resp => {
+        L.geoJSON(resp.data, {
+          style: style,
+          filter: filter,
+          onEachFeature: onEachFeature
+        }).addTo(this.map);
+      }
+
+      axios.get("http://172.22.241.110:8080/geoserver/zhcq/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=zhcq%3Abuildings&maxFeatures=50&outputFormat=application%2Fjson").then(process);
+    },
     initUILayers() {
       // marker 标注
       L.marker(this.center).addTo(this.map)
@@ -494,7 +495,7 @@ export default {
 
 <style>
 #map {
-  height: 650px;
+  height: 700px;
   width: 100%;
   padding: 0;
   margin: 0;
